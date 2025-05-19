@@ -1,0 +1,9 @@
+# Ignorar archivos compilados
+*.pyc
+
+# Ignorar carpetas del sistema
+__pycache__/
+.env
+
+# Ignorar archivos específicos
+processed_emails.json
