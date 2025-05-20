@@ -3,6 +3,7 @@ import imaplib
 import email
 import json
 import os
+import re
 from email.header import decode_header
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -72,11 +73,13 @@ def check_emails():
                         body = part.get_payload(decode=True).decode('utf-8', errors='replace')
                         break
                 
-                print(f'\nNuevo correo procesado - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-                print(f'ID: {email_id}')
-                print(f'Asunto: {subject}')
-                print(f'Mensaje: {body[:200]}...')
-                print('-----------------------------')
+                datajson = parse_message(body)
+                if datajson.get('NumberStat'):
+                    print(f'\nNuevo correo procesado - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+                    print(f'ID: {email_id}')
+                    print(f'Asunto: {subject}')
+                    print(f'Mensaje: {datajson.get('NumberStat')[0]}')
+                    print('-----------------------------')
                 
                 # Marcar como procesado
                 processed_ids.add(email_id)
@@ -89,6 +92,25 @@ def check_emails():
 
     except Exception as e:
         print(f"Error: {e}")
+
+
+def parse_message(text):
+    text = text.strip()
+
+    # Intentamos primero interpretar como JSON
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass  # No es JSON, seguimos con el análisis como texto plano
+
+    # Si no es JSON, lo interpretamos como texto plano tipo clave: valor
+    parsed = {}
+    for line in text.splitlines():
+        if ": " in line:
+            key, value = line.split(": ", 1)
+            parsed[key.strip()] = value.strip()
+    return parsed
+
 
 if __name__ == "__main__":
     check_emails()
